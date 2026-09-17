@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>看山任意门 · 知乎黑客松 2026 决赛路演</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#0066FF;
+    --blue-deep:#0B3D91;
+    --navy:#081A47;
+    --cyan:#3CCBF5;
+    --violet:#7A5CFF;
+    --paper:#F2F6FF;
+    --ink-soft:rgba(8,26,71,.6);
+    --line:rgba(8,26,71,.25);
+    --wline:rgba(255,255,255,.28);
+    --disp:"Space Grotesk","Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    --mono:"Space Mono",Consolas,"Noto Sans SC",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:var(--paper);color:var(--navy);font-family:var(--disp);overflow:hidden}
+
+  /* ============ 幻灯片基底 ============ */
+  .slide{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:10vh 7vw;opacity:0;visibility:hidden;transform:translateY(26px);
+    transition:opacity .45s ease,transform .45s ease,visibility .45s;z-index:10;overflow:hidden;
+    background-image:linear-gradient(rgba(0,102,255,.05) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(0,102,255,.05) 1px,transparent 1px);
+    background-size:52px 52px}
+  .slide.active{opacity:1;visibility:visible;transform:translateY(0)}
+  .slide.past{transform:translateY(-26px)}
+  .slide>*{position:relative;z-index:2}
+  /* 深色反白页 */
+  .slide.inv{background:var(--navy);color:#EDF3FF;
+    background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px)}
+
+  /* ============ 极光面板 ============ */
+  .gp{position:relative;border:2px solid var(--navy);overflow:hidden;
+    background:
+      radial-gradient(circle at 28% 26%,rgba(60,203,245,.95),transparent 52%),
+      radial-gradient(circle at 72% 58%,rgba(122,92,255,.85),transparent 56%),
+      radial-gradient(circle at 46% 92%,rgba(0,102,255,.9),transparent 62%),
+      var(--blue-deep)}
+  .gp::after{content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,transparent 1px 4px)}
+
+  /* ============ chrome ============ */
+  #bar{position:fixed;top:0;left:0;height:5px;background:linear-gradient(90deg,var(--blue),var(--cyan));box-shadow:0 0 12px rgba(0,102,255,.5);width:0%;transition:width .5s ease;z-index:60}
+  #meta{position:fixed;top:22px;left:7vw;right:7vw;display:flex;justify-content:space-between;
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--ink-soft);z-index:50;
+    border-bottom:2px solid var(--navy);padding-bottom:10px}
+  #meta .dot{color:var(--blue)}
+  #checker{position:fixed;top:56px;left:7vw;width:96px;height:12px;z-index:50;
+    background:repeating-conic-gradient(var(--navy) 0% 25%,transparent 0% 50%) 0 0/24px 24px}
+  #page{position:fixed;bottom:22px;right:7vw;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--ink-soft);z-index:50}
+  #page b{color:var(--blue);font-size:17px}
+  #hint{position:fixed;bottom:22px;left:7vw;font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--ink-soft);z-index:50}
+
+  /* ============ 文字 ============ */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--blue);margin-bottom:2.6vh;font-weight:700}
+  .kicker::before{content:"◈ "}
+  .inv .kicker{color:var(--cyan)}
+  h1{font-weight:900;font-size:clamp(34px,4.3vw,68px);line-height:1.22;letter-spacing:.005em}
+  .huge{font-size:clamp(54px,7vw,116px);letter-spacing:-.01em}
+  .lead{font-size:clamp(15px,1.3vw,20px);line-height:1.95;max-width:52em}
+  .small{font-size:13px;line-height:1.85;color:var(--ink-soft)}
+  .inv .small{color:rgba(237,243,255,.65)}
+  .em-blue{color:var(--blue)}
+  .em-cyan{color:var(--cyan)}
+  .inv h1 .em-cyan{color:var(--cyan)}
+  .hl-blue{background:var(--blue);color:#fff;padding:0 .18em;box-shadow:4px 4px 0 var(--navy)}
+  .gt{font-family:var(--mono);font-size:clamp(12px,1.05vw,15px);color:var(--ink-soft);letter-spacing:.14em;margin-bottom:2vh}
+  .gt b{color:var(--blue)}
+
+  .bgword{position:absolute;right:3vw;bottom:4vh;font-family:var(--disp);font-weight:700;
+    font-size:clamp(110px,24vh,280px);line-height:1;color:transparent;
+    -webkit-text-stroke:2px rgba(0,102,255,.22);pointer-events:none;user-select:none;
+    z-index:1!important;letter-spacing:-.02em}
+  .inv .bgword{-webkit-text-stroke:2px rgba(255,255,255,.14)}
+
+  /* ============ 装饰件 ============ */
+  .barcode{height:30px;width:170px;
+    background:repeating-linear-gradient(90deg,var(--navy) 0 2px,transparent 2px 4px,var(--navy) 4px 8px,transparent 8px 10px,var(--navy) 10px 11px,transparent 11px 15px,var(--navy) 15px 18px,transparent 18px 20px)}
+  .barcode.w{background:repeating-linear-gradient(90deg,#fff 0 2px,transparent 2px 4px,#fff 4px 8px,transparent 8px 10px,#fff 10px 11px,transparent 11px 15px,#fff 15px 18px,transparent 18px 20px)}
+  .dots{width:90px;height:40px;background-image:radial-gradient(var(--navy) 1.3px,transparent 1.4px);background-size:9px 9px}
+  .stamp{display:inline-flex;align-items:center;gap:10px;border:2px solid var(--navy);
+    padding:11px 18px;font-family:var(--mono);font-size:12px;letter-spacing:.22em;background:#fff;
+    box-shadow:5px 5px 0 rgba(0,102,255,.35)}
+  .stamp i{width:8px;height:8px;background:var(--blue);border-radius:50%}
+  .stamp.rot{transform:rotate(-5deg)}
+  .stamp.inv-s{border-color:#fff;background:transparent;color:#fff;box-shadow:5px 5px 0 rgba(60,203,245,.4)}
+  .stamp.inv-s i{background:var(--cyan)}
+  .sidetext{position:absolute;right:2.4vw;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;
+    font-family:var(--mono);font-size:11px;letter-spacing:.42em;color:var(--ink-soft);z-index:2;white-space:nowrap}
+  .tick{position:absolute;font-family:var(--mono);font-size:13px;color:var(--blue);z-index:2;animation:blink 2.6s ease-in-out infinite}
+
+  /* ============ 行 / 条 ============ */
+  .flow{display:flex;flex-direction:column;margin-top:3.2vh;max-width:64em}
+  .flow .step{display:flex;align-items:baseline;gap:2.2vw;padding:1.8vh 0;border-top:2px solid var(--line)}
+  .flow .step:last-child{border-bottom:2px solid var(--line)}
+  .flow .no{font-family:var(--mono);font-size:14px;color:var(--blue);min-width:5em;letter-spacing:.06em;white-space:nowrap;font-weight:700}
+  .flow .tx{font-size:clamp(15px,1.28vw,19px);line-height:1.8}
+  .flow .tx b{color:var(--blue)}
+  .inv .flow .step{border-color:var(--wline)}
+  .inv .flow .no{color:var(--cyan)}
+  .inv .flow .tx b{color:var(--cyan)}
+
+  .miniline{display:flex;align-items:baseline;gap:1.4vw;padding:2vh 0;border-top:2px solid var(--line);max-width:64em}
+  .miniline:last-child{border-bottom:2px solid var(--line)}
+  .miniline b{font-family:var(--mono);color:var(--blue);font-size:clamp(13px,1.2vw,17px);white-space:nowrap}
+  .miniline span{font-size:clamp(14px,1.15vw,17px);line-height:1.75}
+  .inv .miniline{border-color:var(--wline)}
+  .inv .miniline b{color:var(--cyan)}
+
+  /* ============ 链条 ============ */
+  .chain{display:flex;flex-wrap:wrap;align-items:center;gap:12px 12px;margin-top:3.6vh}
+  .chain .node{background:var(--navy);color:#fff;padding:13px 20px;font-size:14.5px;line-height:1.4;
+    box-shadow:5px 5px 0 rgba(0,102,255,.4)}
+  .chain .node.hot{background:var(--blue);font-weight:700;box-shadow:5px 5px 0 var(--navy)}
+  .chain .arr{font-family:var(--mono);color:var(--blue);font-size:17px;font-weight:700}
+
+  /* ============ 图文并排 ============ */
+  .duo{display:flex;align-items:center;gap:3.4vw}
+  .duo .txtcol{flex:1;min-width:0}
+  .shot{flex-shrink:0;background:#fff;padding:9px;border:2px solid var(--navy);
+    box-shadow:14px 14px 0 rgba(0,102,255,.35);position:relative;z-index:2}
+  .shot img{display:block;width:100%}
+  .shot .cap{margin-top:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--ink-soft);text-align:center}
+  .w-52{width:min(48vw,830px)}
+  .w-40{width:min(36vw,600px)}
+
+  .footnote{margin-top:2.4vh;font-size:12.5px;color:var(--ink-soft);max-width:54em;line-height:1.8;font-family:var(--mono)}
+  .footnote::before{content:"※ ";color:var(--blue)}
+  .inv .footnote{color:rgba(237,243,255,.6)}
+
+  .footlink{position:absolute;bottom:8.5vh;left:7vw;font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--ink-soft);z-index:3}
+  .footlink b{color:var(--blue)}
+  .inv .footlink{color:rgba(237,243,255,.6)}
+  .inv .footlink b{color:var(--cyan)}
+
+  /* ============ 跑马灯 ============ */
+  .marquee{position:absolute;left:0;right:0;bottom:0;background:var(--navy);color:#fff;
+    overflow:hidden;padding:12px 0;z-index:20;border-top:2px solid var(--navy)}
+  .marquee .inner{display:inline-flex;white-space:nowrap;animation:mq 22s linear infinite;
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.26em}
+  .marquee .inner span{padding:0 1.6em}
+  .marquee .inner .b{color:var(--cyan)}
+  .inv .marquee{background:var(--blue);border-top-color:#fff}
+  @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* ============ 视频播放器 ============ */
+  .vidwrap{position:relative;background:#041025;border:2px solid var(--navy);
+    box-shadow:14px 14px 0 rgba(0,102,255,.35);cursor:pointer;z-index:2}
+  .vidwrap video{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#041025}
+  .vidwrap .vbadge{position:absolute;top:-15px;left:14px;background:#fff;padding:3px 9px;z-index:3;
+    font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--blue);border:2px solid var(--blue)}
+  .vidwrap .playcover{position:absolute;inset:0;display:flex;flex-direction:column;gap:14px;
+    align-items:center;justify-content:center;background:rgba(4,16,37,.52);transition:opacity .3s;z-index:2}
+  .vidwrap.playing .playcover{opacity:0;pointer-events:none}
+  .playcover .pb{width:84px;height:84px;border:2px solid #fff;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;
+    background:rgba(0,102,255,.7);padding-left:8px}
+  .playcover .pt{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:#fff}
+  .vidwrap .vcap{position:absolute;left:0;right:0;bottom:0;padding:10px 14px;z-index:2;
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:rgba(255,255,255,.85);
+    background:linear-gradient(transparent,rgba(4,16,37,.85));pointer-events:none}
+
+  /* ============ 三扇门卡片 ============ */
+  .doorgrid{display:flex;gap:2.2vw;margin-top:3.4vh}
+  .doorcard{flex:1;background:#fff;border:2px solid var(--navy);
+    box-shadow:9px 9px 0 rgba(0,102,255,.3);overflow:hidden;display:flex;flex-direction:column}
+  .doorcard img{display:block;width:100%;height:min(16.7vw,26vh);object-fit:cover;object-position:center}
+  .doorcard .bd{padding:2vh 1.2vw 2.2vh}
+  .doorcard .tg{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--blue);font-weight:700;margin-bottom:1.2vh}
+  .doorcard .nm{font-weight:900;font-size:clamp(18px,1.7vw,27px);margin-bottom:1vh;line-height:1.3}
+  .doorcard .ln{font-size:clamp(13px,1.08vw,16.5px);line-height:1.75;color:var(--ink-soft)}
+
+  /* ============ 完成度数字条 ============ */
+  .stats{display:flex;gap:3.4vw;flex-wrap:wrap;margin-top:1vh}
+  .stat b{display:block;font-weight:900;font-size:clamp(34px,3.8vw,62px);line-height:1;color:var(--cyan)}
+  .stat span{display:block;margin-top:1vh;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:rgba(237,243,255,.65)}
+
+  /* ============ 线框几何 ============ */
+  .wire{position:absolute;pointer-events:none;z-index:1}
+  .wire svg{display:block;width:100%;height:auto}
+
+  /* ============ 进场动效 ============ */
+  @keyframes riseIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes popIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+  @keyframes wipeIn{from{clip-path:inset(0 0 0 100%)}to{clip-path:inset(0 0 0 0)}}
+  @keyframes wordIn{from{opacity:0;transform:translateX(5vw)}to{opacity:1;transform:translateX(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes scan{to{background-position:0 4px}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .slide.active .kicker{animation:riseIn .55s .05s both}
+  .slide.active h1{animation:riseIn .65s .14s both}
+  .slide.active .lead{animation:riseIn .6s .24s both}
+  .slide.active .gt{animation:riseIn .55s .14s both}
+  .slide.active .small{animation:riseIn .55s .55s both}
+  .slide.active .footnote{animation:riseIn .55s .55s both}
+  .slide.active .footlink{animation:fadeIn .6s .6s both}
+  .slide.active .stamp{animation:fadeIn .5s .65s both}
+  .slide.active .barcode,.slide.active .dots{animation:fadeIn .6s .75s both}
+  .slide.active .shot,.slide.active .vidwrap{animation:popIn .7s .3s both}
+  .slide.active .bgword{animation:wordIn 1s .25s both}
+  .slide.active .sidetext{animation:fadeIn .9s .8s both}
+  .slide.active .marquee{animation:fadeIn .5s .5s both}
+  .slide.active .miniline:nth-child(1){animation:riseIn .5s .2s both}
+  .slide.active .miniline:nth-child(2){animation:riseIn .5s .3s both}
+  .slide.active .miniline:nth-child(3){animation:riseIn .5s .4s both}
+  .slide.active .flow .step:nth-child(1){animation:riseIn .5s .16s both}
+  .slide.active .flow .step:nth-child(2){animation:riseIn .5s .28s both}
+  .slide.active .flow .step:nth-child(3){animation:riseIn .5s .4s both}
+  .slide.active .doorcard:nth-child(1){animation:riseIn .55s .18s both}
+  .slide.active .doorcard:nth-child(2){animation:riseIn .55s .32s both}
+  .slide.active .doorcard:nth-child(3){animation:riseIn .55s .46s both}
+  .slide.active .stat:nth-child(1){animation:riseIn .5s .15s both}
+  .slide.active .stat:nth-child(2){animation:riseIn .5s .25s both}
+  .slide.active .stat:nth-child(3){animation:riseIn .5s .35s both}
+  .slide.active .stat:nth-child(4){animation:riseIn .5s .45s both}
+  .slide.active .stat:nth-child(5){animation:riseIn .5s .55s both}
+  .slide.active .chain>*{animation:popIn .45s both}
+  .slide.active .chain>*:nth-child(1){animation-delay:.34s}
+  .slide.active .chain>*:nth-child(2){animation-delay:.41s}
+  .slide.active .chain>*:nth-child(3){animation-delay:.48s}
+  .slide.active .chain>*:nth-child(4){animation-delay:.55s}
+  .slide.active .chain>*:nth-child(5){animation-delay:.62s}
+  .slide.active .chain>*:nth-child(6){animation-delay:.69s}
+  .slide.active .chain>*:nth-child(7){animation-delay:.76s}
+  .slide.active .chain>*:nth-child(8){animation-delay:.83s}
+  .slide.active .chain>*:nth-child(9){animation-delay:.9s}
+  .slide.active .chain>*:nth-child(10){animation-delay:.97s}
+  .slide.active .chain>*:nth-child(11){animation-delay:1.04s}
+  .slide.active .chain>*:nth-child(12){animation-delay:1.11s}
+  .slide.active .chain>*:nth-child(13){animation-delay:1.18s}
+  .gp::after{background-size:auto 4px;animation:scan 7s linear infinite}
+
+  /* ============ 任意门开门 + 白场转场 ============ */
+  #flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:90;transition:opacity .55s ease}
+  #flash.on{opacity:1}
+  .door{z-index:2;transition:transform .95s cubic-bezier(.6,0,.3,1) .3s,translate .95s cubic-bezier(.6,0,.3,1) .3s,opacity .5s ease .55s;will-change:transform}
+  .door>svg{overflow:visible;transform-origin:50% 88%;animation:sway 6s ease-in-out infinite}
+  @keyframes sway{0%,100%{transform:rotate(0deg)}50%{transform:rotate(.8deg)}}
+  .door ellipse{animation:dashMove 14s linear infinite}
+  @keyframes dashMove{to{stroke-dashoffset:-120}}
+  .door .leaf{transform-box:fill-box;transform-origin:left center;transition:transform .85s cubic-bezier(.72,0,.26,1),opacity .35s ease .55s}
+  .door .leaf>rect{fill:rgba(8,26,71,.55)}
+  .door .portal{filter:drop-shadow(0 0 10px rgba(255,255,255,.9)) drop-shadow(0 0 34px rgba(60,203,245,.75))}
+  .door .portal rect{opacity:0;transition:opacity .45s ease .3s}
+  .slide.opendoor .door .leaf{transform:rotateY(-104deg);opacity:0}
+  .slide.opendoor .door .portal rect{opacity:1}
+  .slide.opendoor .door{translate:-10% -50%;transform:scale(10);opacity:0;z-index:70!important}
+  .coverfade{transition:opacity .45s ease,transform .45s ease}
+  .slide.opendoor .coverfade{opacity:0;transform:translateY(-18px)}
+
+  /* ============ 矮窗口适配（非全屏/小屏排练） ============ */
+  @media (max-height:860px){
+    .slide{padding:8.5vh 7vw}
+    h1{font-size:clamp(28px,3.5vw,52px)}
+    .huge{font-size:clamp(42px,5.4vw,88px)}
+    .kicker{margin-bottom:1.6vh}
+    .lead{line-height:1.7}
+    .doorgrid{margin-top:2.2vh}
+    .doorcard img{height:min(15vw,21vh)}
+    .doorcard .bd{padding:1.4vh 1vw 1.6vh}
+    .doorcard .nm{margin-bottom:.6vh}
+    .miniline{padding:1.3vh 0}
+    .flow .step{padding:1.2vh 0}
+    .chain{margin-top:2.4vh}
+    .chain .node{padding:9px 15px}
+    .footlink{bottom:6vh}
+    .duo .shot{width:min(20vw,300px)}
+    .footnote{margin-top:1.6vh}
+  }
+
+  @media (max-width:900px){
+    .narrow,.narrow-l{padding-left:7vw;padding-right:7vw}
+    .duo{flex-direction:column}
+    .doorgrid{flex-direction:column}
+    .w-52,.w-40{width:100%}
+    .bgword,.sidetext{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+<div id="flash"></div>
+<div id="meta"><span><span class="dot">●</span> KANSHAN GATE · 看山任意门</span><span>ZHIHU HACKATHON 2026 · 跨次元游乐场 · TEAM 对对对啊不对不对不队</span></div>
+<div id="checker"></div>
+<div id="hint">← → 翻页 / NAVIGATE</div>
+<div id="page"><b>01</b> / 07</div>
+
+<!-- ================= 01 封面：开场白 + 推门转场 ================= -->
+<section class="slide" style="padding-right:0">
+  <div class="gp" style="position:absolute;top:0;bottom:0;right:0;width:42vw;border:none;z-index:0!important"></div>
+  <div class="wire door" style="right:9vw;top:50%;translate:0 -56%;width:min(22vw,300px)">
+    <svg viewBox="0 0 220 330" fill="none" stroke="#fff" stroke-width="1.6">
+      <rect x="30" y="18" width="160" height="280" stroke="#3CCBF5" stroke-width="2.4"/>
+      <g class="portal"><rect x="48" y="38" width="124" height="260" fill="#fff" stroke="none"/></g>
+      <g class="leaf">
+        <rect x="48" y="38" width="124" height="260"/>
+        <line x1="48" y1="110" x2="172" y2="110" stroke-dasharray="4 6" opacity=".65"/>
+        <line x1="48" y1="210" x2="172" y2="210" stroke-dasharray="4 6" opacity=".65"/>
+        <circle cx="156" cy="172" r="6" stroke="#3CCBF5" stroke-width="2.4"/>
+      </g>
+      <line x1="30" y1="18" x2="48" y2="38"/><line x1="190" y1="18" x2="172" y2="38"/>
+      <line x1="30" y1="298" x2="48" y2="298"/><line x1="190" y1="298" x2="172" y2="298"/>
+      <ellipse cx="110" cy="312" rx="86" ry="10" stroke="#fff" stroke-dasharray="5 6"/>
+      <ellipse cx="110" cy="322" rx="120" ry="8" stroke="#3CCBF5" stroke-dasharray="3 7"/>
+      <text x="60" y="70" font-family="Space Mono,monospace" font-size="11" fill="#3CCBF5" stroke="none" letter-spacing="2">GATE·03</text>
+    </svg>
+  </div>
+  <div class="coverfade" style="max-width:52vw">
+    <div class="kicker">ZHIHU HACKATHON 2026 · 跨次元游乐场 · 决赛</div>
+    <h1 class="huge">看山<br><span class="em-blue">任意门</span></h1>
+    <p class="lead" style="margin-top:3.4vh">把盐选故事，从「读到这里」<br>变成「<span class="hl-blue">我已经走进去了</span>」。</p>
+    <div style="margin-top:4.6vh;display:flex;align-items:center;gap:26px;flex-wrap:wrap">
+      <span class="stamp"><i></i>谢邀，人在现场</span>
+      <span class="barcode"></span>
+      <span class="dots"></span>
+    </div>
+  </div>
+  <div class="footlink coverfade">DEMO · <b>kanshan.makebook.hk2048.online</b></div>
+  <span class="tick" style="right:40vw;top:12vh">+</span>
+  <span class="tick" style="right:2vw;bottom:12vh">+</span>
+  <div class="marquee"><div class="inner">
+    <span>看山任意门</span><span class="b">✦</span><span>KANSHAN ANYDOOR</span><span class="b">✦</span><span>谢邀人在现场</span><span class="b">✦</span><span>ZHIHU HACKATHON 2026</span><span class="b">✦</span><span>盐选故事 × GAME ENGINE</span><span class="b">✦</span>
+    <span>看山任意门</span><span class="b">✦</span><span>KANSHAN ANYDOOR</span><span class="b">✦</span><span>谢邀人在现场</span><span class="b">✦</span><span>ZHIHU HACKATHON 2026</span><span class="b">✦</span><span>盐选故事 × GAME ENGINE</span><span class="b">✦</span>
+  </div></div>
+</section>
+
+<!-- ================= 02 视频 A：世界篇 60S（深色影院页） ================= -->
+<section class="slide inv">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:3.2vh">
+    <div class="kicker" style="margin-bottom:0">先看世界 · DEMO REEL · 77S</div>
+    <div class="vidwrap" style="width:min(66vw,1180px)">
+      <span class="vbadge">▶ WORLD TOUR · 世界篇</span>
+      <video src="assets/demo_worlds.mp4" poster="assets/demo_worlds_poster.jpg" preload="auto" playsinline></video>
+      <div class="playcover"><span class="pb">▶</span><span class="pt">PLAY · 77S</span></div>
+      <div class="vcap">「怎么把文章变成游戏」 → 门厅开门 → 《近视眼》 → 《端妃》 → 《蓝血》评论区</div>
+    </div>
+  </div>
+  <div class="bgword">DEMO</div>
+  <div class="sidetext" style="color:rgba(255,255,255,.5)">WORLD TOUR · 60S · KANSHAN GATE</div>
+</section>
+
+<!-- ================= 03 三扇门总览 ================= -->
+<section class="slide">
+  <div class="kicker">三扇门 · THREE DOORS</div>
+  <div class="gt">门厅里那位，是刘看山——不是主角，是<b>给你开门的人</b></div>
+  <h1>统一的，是入口<br>区别，在<span class="hl-blue">门后的动作</span></h1>
+  <div class="doorgrid">
+    <div class="doorcard">
+      <img src="assets/blue_wansou.png" alt="蓝血·万搜页面">
+      <div class="bd">
+        <div class="tg">ARG 调查 · FILE 01</div>
+        <div class="nm">《蓝血》</div>
+        <div class="ln">所有人都在说话时，怎么区分「我觉得」和「我能证明」——知乎的提问、回帖、评论区，第一次成了玩法本身。</div>
+      </div>
+    </div>
+    <div class="doorcard">
+      <img src="assets/myopia_corridor.png" alt="近视眼勇闯恐怖游戏·暗走廊">
+      <div class="bd">
+        <div class="tg">3D 感知恐怖 · GAME 01</div>
+        <div class="nm">《近视眼勇闯恐怖游戏》</div>
+        <div class="ln">她的近视，变成你的视野限制——看不清，你就不敢走。</div>
+      </div>
+    </div>
+    <div class="doorcard">
+      <img src="assets/duan_dialogue.png" alt="端妃黑又壮·青杏对话">
+      <div class="bd">
+        <div class="tg">3D 庭院日常 · GAME 02</div>
+        <div class="nm">《端妃黑又壮》</div>
+        <div class="ln">翻土、播种、洗手、下棋——把日子过稳，也是玩法。对话逐行标注原文出处。</div>
+      </div>
+    </div>
+  </div>
+  <div class="footlink">那这些世界，是怎么来的？<b> →</b></div>
+  <div class="bgword">3 DOORS</div>
+</section>
+
+<!-- ================= 04 AI 分工 + 视频 B（搭建实录） ================= -->
+<section class="slide">
+  <div class="duo">
+    <div class="txtcol">
+      <div class="kicker">这些世界是怎么来的 · AI'S JOBS</div>
+      <div class="gt">空口无凭 · 先看 <b>30 秒</b></div>
+      <h1>这段画面里<br><span class="em-blue">没有人类</span></h1>
+      <div style="margin-top:3.2vh">
+        <div class="miniline"><b>生产 ›</b><span>盐选故事进去，可玩原型出来——改编的边际成本，趋零</span></div>
+        <div class="miniline"><b>质检 ›</b><span>Agent 不只造世界，还要运行它：<b>生成成功 ≠ 作品完成</b></span></div>
+        <div class="miniline"><b>台前 ›</b><span>《蓝血》里 NPC 接住每句追问，但事实永远来自剧本——<b>零编造</b></span></div>
+      </div>
+      <p class="small" style="margin-top:2.4vh">门厅、刘看山、两个世界——都是同一台引擎做的。</p>
+    </div>
+    <div class="vidwrap w-52">
+      <span class="vbadge">AGENT AT WORK · 30S</span>
+      <video src="assets/agent_build.mp4" poster="assets/agent_build_poster.jpg" preload="auto" playsinline></video>
+      <div class="playcover"><span class="pb">▶</span><span class="pt">PLAY · 30S</span></div>
+      <div class="vcap">空地 → 平台升起 → 门框入场 → 场景嵌入门框 → 世界就位</div>
+    </div>
+  </div>
+  <div class="bgword">NOBODY</div>
+</section>
+
+<!-- ================= 05 引擎 = HARNESS + 窄门 ================= -->
+<section class="slide">
+  <div class="kicker">ENGINE AS HARNESS · 给 AI 搭的工作环境</div>
+  <h1>不敢说神作<br><span class="hl-blue">保证及格</span></h1>
+  <div class="chain">
+    <span class="node">获授权故事片段</span><span class="arr">→</span>
+    <span class="node">理解与边界标注</span><span class="arr">→</span>
+    <span class="node hot">玩法蓝图</span><span class="arr">→</span>
+    <span class="node">场景 · 交互 · HUD</span><span class="arr">→</span>
+    <span class="node">来源检查与试玩</span><span class="arr">→</span>
+    <span class="node hot">可玩的开放篇章</span>
+  </div>
+  <div style="margin-top:3.6vh">
+    <div class="miniline"><b>现场 ›</b><span>引擎——Agent 干活的地方</span></div>
+    <div class="miniline"><b>手册 ›</b><span>Skills——它做事的方法</span></div>
+    <div class="miniline"><b>验收 ›</b><span>运行验证——窄门测试：门太窄、角色被挡住，Agent 查碰撞、改参数、重放，<b>确认通过</b></span></div>
+  </div>
+  <div style="margin-top:3vh;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+    <span class="stamp rot"><i></i>三扇门是展品 · 三百扇门才是答案</span>
+  </div>
+  <p class="footnote">PS1 风格是同一思路的审美容错——AI 做不出 3A，但 AI 做的 PS1，看起来就该是这样。</p>
+  <div class="wire" style="right:8vw;top:10vh;width:130px;z-index:1!important">
+    <svg viewBox="0 0 200 200" fill="none" stroke="#0066FF" stroke-width="1.4" opacity=".7">
+      <circle cx="100" cy="100" r="88"/>
+      <ellipse cx="100" cy="100" rx="88" ry="30"/>
+      <ellipse cx="100" cy="100" rx="88" ry="62"/>
+      <ellipse cx="100" cy="100" rx="30" ry="88"/>
+      <ellipse cx="100" cy="100" rx="62" ry="88"/>
+      <line x1="12" y1="100" x2="188" y2="100" stroke-dasharray="4 5"/>
+    </svg>
+  </div>
+  <div class="bgword">HARNESS</div>
+</section>
+
+<!-- ================= 06 人格卡 + 回流闭环 + 知乎价值 ================= -->
+<section class="slide">
+  <div class="duo">
+    <div class="shot" style="width:min(24vw,360px)">
+      <img src="assets/card_ctrl.png" alt="看山调查人格卡·草稿保险柜">
+      <div class="cap">FIG.05 · 人格卡 · 草稿保险柜 · 证物/克制/隐蔽</div>
+    </div>
+    <div class="txtcol">
+      <div class="kicker">玩完，不是结束 · THE LOOP</div>
+      <h1>带走的不是答案<br>是「<span class="em-blue">我怎样进去过</span>」</h1>
+      <div class="chain" style="margin-top:3vh">
+        <span class="node">我做了选择</span><span class="arr">→</span>
+        <span class="node">卡像我</span><span class="arr">→</span>
+        <span class="node">朋友扫码回到门厅</span><span class="arr">→</span>
+        <span class="node hot">刘看山再开一扇门</span>
+      </div>
+      <div style="margin-top:3vh">
+        <div class="miniline"><b>效率 ›</b><span>盐选库存，从文本资产变成可进入的世界</span></div>
+        <div class="miniline"><b>体验 ›</b><span>读者带着自己的站位，回到原文和讨论</span></div>
+        <div class="miniline"><b>质量 ›</b><span>零编造、不剧透，结局一律引流阅读原文</span></div>
+      </div>
+      <p class="footnote">人格卡兑换会员福利，是设计中的下一步——设计中的东西，我们不拿来挣分。</p>
+    </div>
+  </div>
+  <div class="bgword">LOOP</div>
+</section>
+
+<!-- ================= 07 收尾：完成度 + 未来（反白深蓝页） ================= -->
+<section class="slide inv">
+  <div class="kicker">完成度 · 与未来 · FINALE</div>
+  <div class="stats">
+    <div class="stat"><b>31</b><span>幕场景 · 旗舰切片</span></div>
+    <div class="stat"><b>19</b><span>张定制场景图</span></div>
+    <div class="stat"><b>3</b><span>种结局 + 彩蛋</span></div>
+    <div class="stat"><b>2+</b><span>篇授权故事 · 同一引擎</span></div>
+    <div class="stat"><b>1</b><span>条链接 · 即点即玩</span></div>
+  </div>
+  <div class="flow" style="margin-top:4.6vh;max-width:60em">
+    <div class="step"><span class="no">引擎 ›</span><span class="tx">更多盐选故事的引擎化改编，持续验证对陌生故事的适应能力</span></div>
+    <div class="step"><span class="no">创作者 ›</span><span class="tx">改编工具开放——做「盐言作者的一键改编器」</span></div>
+    <div class="step"><span class="no">世界 ›</span><span class="tx">门厅成为盐选宇宙的真正入口</span></div>
+  </div>
+  <h1 class="huge" style="margin-top:4.2vh">谢邀，<span class="em-cyan">人在现场。</span></h1>
+  <p class="small" style="margin-top:2vh">这句话是知乎答主的开场白——今天，它是每一位玩家的状态。</p>
+  <div style="margin-top:3.4vh;display:flex;gap:24px;align-items:center">
+    <span class="barcode w"></span>
+    <span style="font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:rgba(237,243,255,.55)">© 2026 KANSHAN GATE · SEE YOU IN THE STORY</span>
+  </div>
+  <div class="footlink">对对对啊不对不对不队 · <b>kanshan.makebook.hk2048.online</b></div>
+  <div class="marquee"><div class="inner">
+    <span>谢邀人在现场</span><span class="b">✦</span><span>THANK YOU</span><span class="b">✦</span><span>万千特异点 等你推门</span><span class="b">✦</span><span>KANSHAN ANYDOOR</span><span class="b">✦</span><span>Q&amp;A ↓</span><span class="b">✦</span>
+    <span>谢邀人在现场</span><span class="b">✦</span><span>THANK YOU</span><span class="b">✦</span><span>万千特异点 等你推门</span><span class="b">✦</span><span>KANSHAN ANYDOOR</span><span class="b">✦</span><span>Q&amp;A ↓</span><span class="b">✦</span>
+  </div></div>
+</section>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var n=slides.length, i=-1, busy=false;
+  var bar=document.getElementById('bar'), page=document.getElementById('page');
+  var meta=document.getElementById('meta'), checker=document.getElementById('checker');
+  var hint=document.getElementById('hint'), flash=document.getElementById('flash');
+  function pad(x){return (x<9?'0':'')+(x+1)}
+  function chrome(){
+    bar.style.width=((i+1)/n*100)+'%';
+    page.innerHTML='<b>'+pad(i)+'</b> / '+n;
+    page.style.bottom='';
+    var inv=slides[i].classList.contains('inv');
+    var hasMq=!!slides[i].querySelector('.marquee');
+    meta.style.color=inv?'rgba(237,243,255,.7)':'';
+    meta.style.borderColor=inv?'#fff':'';
+    page.style.color=inv?'rgba(237,243,255,.7)':'';
+    hint.style.color=inv?'rgba(237,243,255,.7)':'';
+    hint.style.visibility=hasMq?'hidden':'';
+    if(hasMq)page.style.bottom='56px';
+    checker.style.background=inv?'repeating-conic-gradient(#fff 0% 25%,transparent 0% 50%) 0 0/24px 24px':'';
+    checker.style.opacity=inv?'.8':'';
+  }
+  /* 视频：进入所在页自动播放，离开暂停回卷；播放失败则露出播放盖 */
+  function syncVideos(fromGesture){
+    [].forEach.call(document.querySelectorAll('.vidwrap'),function(w){
+      var v=w.querySelector('video');
+      if(!v)return;
+      var active=(i>=0&&slides[i].contains(w));
+      if(active){
+        var p=v.play();
+        if(p&&p.catch)p.catch(function(){w.classList.remove('playing')});
+      }else{
+        v.pause(); try{v.currentTime=0}catch(e){}
+        w.classList.remove('playing');
+      }
+    });
+  }
+  [].forEach.call(document.querySelectorAll('.vidwrap'),function(w){
+    var v=w.querySelector('video');
+    if(!v)return;
+    w.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(v.paused){v.play()}else{v.pause()}
+    });
+    v.addEventListener('play',function(){w.classList.add('playing')});
+    v.addEventListener('pause',function(){w.classList.remove('playing')});
+    v.addEventListener('ended',function(){w.classList.remove('playing')});
+  });
+  function activate(k){
+    slides[0].classList.remove('opendoor');
+    if(i>=0){
+      slides[i].classList.remove('active');
+      if(k>i)slides[i].classList.add('past'); else slides[i].classList.remove('past');
+    }
+    i=k;
+    slides[i].classList.remove('past');
+    slides[i].classList.add('active');
+    chrome();
+    syncVideos(true);
+  }
+  /* 封面 → 第 2 页：推门 → 白场放大 → 落版（视频 A 随即开播） */
+  function doorGo(){
+    busy=true;
+    slides[0].classList.add('opendoor');
+    setTimeout(function(){flash.classList.add('on')},650);
+    setTimeout(function(){
+      activate(1);
+      setTimeout(function(){flash.classList.remove('on'); busy=false},320);
+    },1250);
+  }
+  /* 第 2 页 → 封面：白场收回 */
+  function doorBack(){
+    busy=true;
+    flash.classList.add('on');
+    setTimeout(function(){
+      activate(0);
+      setTimeout(function(){flash.classList.remove('on'); busy=false},300);
+    },420);
+  }
+  function go(k){
+    k=Math.max(0,Math.min(n-1,k));
+    if(busy||k===i)return;
+    if(i===0&&k===1){doorGo();return}
+    if(i===1&&k===0){doorBack();return}
+    activate(k);
+  }
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(i+1)}
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();go(i-1)}
+    if(e.key==='Home')go(0); if(e.key==='End')go(n-1);
+  });
+  document.addEventListener('click',function(e){
+    if(e.target.closest('a')||e.target.closest('.vidwrap'))return;
+    if(e.clientX>window.innerWidth*0.5)go(i+1); else go(i-1);
+  });
+  var tx=null;
+  document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX});
+  document.addEventListener('touchend',function(e){
+    if(tx===null)return; var dx=e.changedTouches[0].clientX-tx;
+    if(Math.abs(dx)>40){dx<0?go(i+1):go(i-1)} tx=null;
+  });
+  window.addEventListener('hashchange',function(){
+    var h=parseInt(location.hash.replace('#',''),10);
+    if(!isNaN(h))go(h-1);
+  });
+  var init=parseInt(location.hash.replace('#',''),10);
+  activate(isNaN(init)?0:init-1);
+})();
+</script>
+</body>
+</html>
